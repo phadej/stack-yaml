@@ -1,0 +1,36 @@
+name: stack-yaml
+version: 0.0.0.0
+synopsis: Helper to modify stack-yaml
+description: |
+  Helper to modify stack-yaml
+  .
+  @
+  stack yaml update-github-deps
+  @
+author: Oleg Grenrus <oleg.grenrus@iki.fi>
+maintainer: Oleg Grenrus <oleg.grenrus@iki.fi>
+license: BSD3
+github: phadej/stack-yaml
+category: Development
+tested-with: GHC==7.10.3
+extra-source-files:
+- README.md
+
+ghc-options: -Wall
+
+dependencies:
+- base
+- exceptions
+- github
+- lens
+- lens-aeson
+- text
+- optparse-applicative
+- regex-applicative-text
+- vector
+- yaml
+
+executables:
+  stack-yaml:
+    main: Main.hs
+    source-dirs: src
