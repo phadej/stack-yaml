@@ -5,12 +5,17 @@ import Control.Applicative         (many, (<|>))
 import Control.Lens
 import Control.Monad.Catch         (throwM)
 import Data.Aeson.Lens
+import Data.List                   (elemIndex)
+import Data.Monoid                 ((<>))
 import Data.Text                   (Text, pack)
-import Data.Yaml                   (Object, Value, decodeFileEither, encodeFile)
+import Data.Yaml                   (Object, Value, decodeFileEither)
+import Data.Yaml.Pretty            (defConfig, encodePretty, setConfCompare)
 import Text.Regex.Applicative.Text (match, psym)
 
-import qualified Data.Vector as V
-import qualified GitHub      as GH
+import qualified Data.ByteString     as B
+import qualified Data.Vector         as V
+import qualified GitHub              as GH
+import qualified Options.Applicative as O
 
 updateGithubDeps :: Value -> IO Value
 updateGithubDeps =
@@ -35,16 +40,48 @@ parseGithub = match githubRe
     ident    = pack <$> many (psym (/= '/'))
     f a b    = (GH.mkOwnerName a, GH.mkRepoName b)
 
+data Opts = Opts
+    { _optsCmd       :: Value -> IO Value
+    , _optsStackFile :: FilePath
+    }
 
-updateGithubDepsCommand :: IO ()
-updateGithubDepsCommand = wrapCmd updateGithubDeps
-
-wrapCmd :: (Value -> IO Value) -> IO ()
-wrapCmd f = do
-    v' <- decodeFileEither "stack.yaml"
+execCmd :: Opts -> IO ()
+execCmd (Opts f path) = do
+    v' <- decodeFileEither path
     case v' of
         Left err -> throwM err
-        Right v  -> f v >>= encodeFile "stack.yaml"
+        Right v  -> f v >>= B.writeFile path . encodePretty cfg
+  where
+    cfg = setConfCompare cmp defConfig
+    cmp = keyOrder ["resolver", "packages", "extra-deps", "flags", "git", "commit"] <> compare
+
+keyOrder :: [Text] -> Text -> Text -> Ordering
+keyOrder xs a b = case (elemIndex a xs, elemIndex b xs) of
+    (Just i,  Just j)   -> compare i j
+    (Just _,  Nothing)  -> LT
+    (Nothing, Just _)   -> GT
+    (Nothing, Nothing)  -> EQ
+
+optsParser :: O.Parser Opts
+optsParser = Opts <$> cmdParser
+    <*> O.strOption (O.long "stack-yaml" <> O.metavar "STACK_YAML" <> O.help "Which stack.yaml file to use" <> O.value "stack.yaml" <> O.showDefault)
+
+cmdParser :: O.Parser (Value -> IO Value)
+cmdParser = O.subparser $ mconcat
+    [ p "id" pure "Identity transformation"
+    , p "update-github-deps" updateGithubDeps "Update github packages to the latest commit in master branch"
+    ]
+  where
+    p :: String -> (Value -> IO Value)-> String -> O.Mod O.CommandFields (Value -> IO Value)
+    p cmd commandActions desc =
+         O.command cmd $ O.info (O.helper <*> pure commandActions) $ O.progDesc desc
 
 main :: IO ()
-main = updateGithubDepsCommand
+main =
+    O.execParser opts >>= execCmd
+  where
+    opts = O.info (O.helper <*> optsParser) $ mconcat
+        [ O.fullDesc
+        , O.progDesc "TBD"
+        , O.header "stack.yaml modification tools"
+        ]

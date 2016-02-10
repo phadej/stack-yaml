@@ -35,6 +35,7 @@ executable stack-yaml
   ghc-options: -Wall
   build-depends:
       base
+    , bytestring
     , exceptions
     , github
     , lens
