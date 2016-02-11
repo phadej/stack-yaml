@@ -15,7 +15,7 @@ import Data.Yaml                     (Value)
 import System.Exit                   (exitFailure)
 import System.IO                     (hPutStrLn, stderr)
 import Text.Regex.Applicative.Common (decimal)
-import Text.Regex.Applicative.Text   (anySym, few, match, sym)
+import Text.Regex.Applicative.Text   (RE', anySym, few, match, sym)
 
 import           Distribution.Package  (PackageIdentifier (..),
                                         PackageName (..))
@@ -27,15 +27,14 @@ transformation value = do
     newest <- catch PackDeps.loadNewest
                     (\e -> hPutStrLn stderr (failedToLoad e) *> exitFailure)
     traverseOf
-      (key "extra-deps" . values . _String)
-      (updateExtraDep newest)
-      value
+        (key "extra-deps" . values . _String)
+        (updateExtraDep newest)
+        value
   where
     failedToLoad :: IOException -> String
-    failedToLoad err =
-      unlines
+    failedToLoad err = unlines
         [ show err
-        , "Failed to read package database. Doing 'cabal update' might help."
+        , "Failed to read package database. Running 'cabal update' might help."
         ]
 
     updateExtraDep :: PackDeps.Newest -> Text -> IO Text
@@ -59,10 +58,12 @@ transformation value = do
 parsePackageIdentifier :: Text -> Maybe PackageIdentifier
 parsePackageIdentifier = match pkgIdentifierRe
   where
+    pkgIdentifierRe :: RE' PackageIdentifier
     pkgIdentifierRe = PackageIdentifier
         <$> (PackageName <$> few anySym <* sym '-')
         <*> pkgVersionRe
 
+    pkgVersionRe :: RE' Version
     pkgVersionRe = flip Version [] <$> ((:) <$> decimal <*> many (sym '.' *> decimal))
 
 pPrintPackageIdentifier :: PackageIdentifier -> Text

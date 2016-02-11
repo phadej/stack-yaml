@@ -34,21 +34,25 @@ executable stack-yaml
       src
   ghc-options: -Wall
   build-depends:
-      base
+      base >=4.8 && <4.9
     , bytestring
     , Cabal
     , exceptions
     , github
+    , transformers
     , lens
     , lens-aeson
     , optparse-applicative
     , packdeps
+    , http-client
+    , http-client-tls
     , regex-applicative
     , regex-applicative-text
     , text
     , vector
     , yaml
   other-modules:
+      StackYaml.Normalize
       StackYaml.Transformations.UpdateExtraDeps
       StackYaml.Transformations.UpdateGithubDeps
   default-language: Haskell2010
