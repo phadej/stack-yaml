@@ -34,7 +34,7 @@ executable stack-yaml
       src
   ghc-options: -Wall
   build-depends:
-      base
+      base >=4.8 && <4.9
     , bytestring
     , Cabal
     , exceptions
@@ -49,6 +49,7 @@ executable stack-yaml
     , vector
     , yaml
   other-modules:
+      StackYaml.Normalize
       StackYaml.Transformations.UpdateExtraDeps
       StackYaml.Transformations.UpdateGithubDeps
   default-language: Haskell2010

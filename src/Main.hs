@@ -11,6 +11,8 @@ import Data.Yaml.Pretty    (defConfig, encodePretty, setConfCompare)
 import qualified Data.ByteString     as B
 import qualified Options.Applicative as O
 
+import StackYaml.Normalize (normalize)
+
 import qualified StackYaml.Transformations.UpdateExtraDeps  as UpdateExtraDeps
 import qualified StackYaml.Transformations.UpdateGithubDeps as UpdateGithubDeps
 
@@ -24,7 +26,7 @@ execCmd (Opts f path) = do
     v' <- decodeFileEither path
     case v' of
         Left err -> throwM err
-        Right v  -> f v >>= B.writeFile path . encodePretty cfg
+        Right v  -> f v >>= B.writeFile path . encodePretty cfg . normalize
   where
     cfg = setConfCompare cmp defConfig
     cmp = keyOrder ["resolver", "packages", "extra-deps", "flags", "git", "commit"] <> compare
