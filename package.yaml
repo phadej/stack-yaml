@@ -24,10 +24,13 @@ dependencies:
 - Cabal
 - exceptions
 - github
+- transformers
 - lens
 - lens-aeson
 - optparse-applicative
 - packdeps
+- http-client
+- http-client-tls
 - regex-applicative
 - regex-applicative-text
 - text
