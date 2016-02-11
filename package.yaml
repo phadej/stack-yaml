@@ -21,17 +21,23 @@ ghc-options: -Wall
 dependencies:
 - base
 - bytestring
+- Cabal
 - exceptions
 - github
 - lens
 - lens-aeson
-- text
 - optparse-applicative
+- packdeps
+- regex-applicative
 - regex-applicative-text
+- text
 - vector
 - yaml
 
 executables:
   stack-yaml:
     main: Main.hs
+    other-modules:
+      - StackYaml.Transformations.UpdateExtraDeps
+      - StackYaml.Transformations.UpdateGithubDeps
     source-dirs: src
