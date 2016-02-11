@@ -26,10 +26,9 @@ transformation :: Value -> IO Value
 transformation value = do
     newest <- catch PackDeps.loadNewest
                     (\e -> hPutStrLn stderr (failedToLoad e) *> exitFailure)
-    traverseOf
-        (key "extra-deps" . values . _String)
-        (updateExtraDep newest)
-        value
+    traverseOf (key "extra-deps" . values . _String)
+               (withWarn (updateExtraDep newest))
+               value
   where
     failedToLoad :: IOException -> String
     failedToLoad err = unlines
@@ -37,23 +36,21 @@ transformation value = do
         , "Failed to read package database. Running 'cabal update' might help."
         ]
 
-    updateExtraDep :: PackDeps.Newest -> Text -> IO Text
-    updateExtraDep newest dep =
-        (pkgName <$> parsePackageIdentifier dep)
-           & maybe
-               (dep <$ hPutStrLn
-                         stderr
-                         ("Ignoring invalid extra-deps entry " <> show dep))
-               (\name ->
-                   newestPackageId newest name
-                     & maybe
-                         (dep <$ hPutStrLn
-                                   stderr
-                                   ("Ignoring extra-deps entry "
-                                       <> show dep
-                                       <> " as it refers to unknown package "
-                                       <> show (unPackageName name)))
-                         (pure . pPrintPackageIdentifier))
+    updateExtraDep :: PackDeps.Newest -> Text -> Either String Text
+    updateExtraDep newest dep = do
+        name <- warn ("Ignoring invalid extra-deps entry " <> show dep)
+                     (pkgName <$> parsePackageIdentifier dep)
+        warn ("Ignoring extra-deps entry "
+                <> show dep
+                <> " as it refers to unknown package "
+                <> show (unPackageName name))
+             (pPrintPackageIdentifier <$> newestPackageId newest name)
+
+    warn :: a -> Maybe b -> Either a b
+    warn a = maybe (Left a) Right
+
+    withWarn :: (a -> Either String a) -> a -> IO a
+    withWarn f a = either (\msg -> a <$ hPutStrLn stderr msg) pure $ f a
 
 parsePackageIdentifier :: Text -> Maybe PackageIdentifier
 parsePackageIdentifier = match pkgIdentifierRe
