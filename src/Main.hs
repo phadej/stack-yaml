@@ -29,7 +29,7 @@ execCmd (Opts f path) = do
         Right v  -> f v >>= B.writeFile path . encodePretty cfg . normalize
   where
     cfg = setConfCompare cmp defConfig
-    cmp = keyOrder ["resolver", "packages", "extra-deps", "flags", "git", "commit"] <> compare
+    cmp = keyOrder ["resolver", "packages", "extra-deps", "flags", "git", "commit", "location", "extra-dep"] <> compare
 
 keyOrder :: [Text] -> Text -> Text -> Ordering
 keyOrder xs a b = case (elemIndex a xs, elemIndex b xs) of
