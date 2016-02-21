@@ -29,7 +29,16 @@ script:
 - stack --no-terminal --skip-ghc-check sdist
 matrix:
   include:
-  - env: GHCVER=7.10.3 STACK_YAML=stack.yaml PEDANTIC=YES
+  - env: GHCVER=7.8.4 STACK_YAML=stack-lts-2.yaml PEDANTIC=YES
+    addons:
+      apt:
+        sources:
+        - hvr-ghc
+        packages:
+        - ghc-7.8.4
+        - libgmp-dev
+    compiler: ! ': # ghc-7.8.4 stack-lts-2.yaml'
+  - env: GHCVER=7.10.3 STACK_YAML=stack-lts-5.yaml PEDANTIC=YES
     addons:
       apt:
         sources:
@@ -37,7 +46,7 @@ matrix:
         packages:
         - ghc-7.10.3
         - libgmp-dev
-    compiler: ! ': # ghc-7.10.3 stack.yaml'
+    compiler: ! ': # ghc-7.10.3 stack-lts-5.yaml'
 branches:
   only:
   - master

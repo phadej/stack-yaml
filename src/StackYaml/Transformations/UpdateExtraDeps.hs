@@ -4,6 +4,9 @@ module StackYaml.Transformations.UpdateExtraDeps
     ( transformation
     ) where
 
+import Prelude        ()
+import Prelude.Compat
+
 import Control.Applicative           (many)
 import Control.Exception             (IOException, catch)
 import Control.Lens
@@ -43,7 +46,7 @@ transformation value = do
         warn ("Ignoring extra-deps entry "
                 <> show dep
                 <> " as it refers to unknown package "
-                <> show (unPackageName name))
+                <> show (unPackageName' name))
              (pPrintPackageIdentifier <$> newestPackageId newest name)
 
     warn :: a -> Maybe b -> Either a b
@@ -51,6 +54,9 @@ transformation value = do
 
     withWarn :: (a -> Either String a) -> a -> IO a
     withWarn f a = either (\msg -> a <$ hPutStrLn stderr msg) pure $ f a
+
+unPackageName' :: PackageName -> String
+unPackageName' (PackageName name) = name
 
 parsePackageIdentifier :: Text -> Maybe PackageIdentifier
 parsePackageIdentifier = match pkgIdentifierRe
@@ -65,8 +71,8 @@ parsePackageIdentifier = match pkgIdentifierRe
 
 pPrintPackageIdentifier :: PackageIdentifier -> Text
 pPrintPackageIdentifier PackageIdentifier{..} =
-    pack (unPackageName pkgName <> "-" <> showVersion pkgVersion)
+    pack (unPackageName' pkgName <> "-" <> showVersion pkgVersion)
 
 newestPackageId :: PackDeps.Newest -> PackageName -> Maybe PackageIdentifier
 newestPackageId newest name =
-    PackDeps.diPackage <$> PackDeps.getPackage (unPackageName name) newest
+    PackDeps.diPackage <$> PackDeps.getPackage (unPackageName' name) newest

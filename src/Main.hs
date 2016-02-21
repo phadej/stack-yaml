@@ -2,6 +2,9 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Main (main) where
 
+import Prelude        ()
+import Prelude.Compat
+
 import Control.Lens
 import Control.Monad.Catch (throwM)
 import Data.List           (elemIndex)
