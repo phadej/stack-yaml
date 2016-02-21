@@ -1,12 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Main (main) where
 
+import Control.Lens
 import Control.Monad.Catch (throwM)
 import Data.List           (elemIndex)
+import Data.Maybe          (fromMaybe)
 import Data.Monoid         ((<>))
 import Data.Text           (Text)
 import Data.Yaml           (Value, decodeFileEither)
 import Data.Yaml.Pretty    (defConfig, encodePretty, setConfCompare)
+import System.Environment  (lookupEnv)
 
 import qualified Data.ByteString     as B
 import qualified Options.Applicative as O
@@ -18,15 +22,19 @@ import qualified StackYaml.Transformations.UpdateGithubDeps as UpdateGithubDeps
 
 data Opts = Opts
     { _optsCmd       :: Value -> IO Value
-    , _optsStackFile :: FilePath
+    , _optsStackFile :: Maybe FilePath
     }
 
+makeLenses ''Opts
+
 execCmd :: Opts -> IO ()
-execCmd (Opts f path) = do
+execCmd opts = do
+    let path = fromMaybe "stack.yaml" $ opts ^. optsStackFile
+    let cmd = opts ^. optsCmd
     v' <- decodeFileEither path
     case v' of
         Left err -> throwM err
-        Right v  -> f v >>= B.writeFile path . encodePretty cfg . normalize
+        Right v  -> cmd v >>= B.writeFile path . encodePretty cfg . normalize
   where
     cfg = setConfCompare cmp defConfig
     cmp = keyOrder ["resolver", "packages", "extra-deps", "flags", "git", "commit", "location", "extra-dep"] <> compare
@@ -40,7 +48,7 @@ keyOrder xs a b = case (elemIndex a xs, elemIndex b xs) of
 
 optsParser :: O.Parser Opts
 optsParser = Opts <$> cmdParser
-    <*> O.strOption (O.long "stack-yaml" <> O.metavar "STACK_YAML" <> O.help "Which stack.yaml file to use" <> O.value "stack.yaml" <> O.showDefault)
+    <*> O.optional (O.strOption (O.long "stack-yaml" <> O.metavar "STACK_YAML" <> O.help "Which stack.yaml file to use"))
 
 cmdParser :: O.Parser (Value -> IO Value)
 cmdParser = O.subparser $ mconcat
@@ -57,9 +65,16 @@ cmdParser = O.subparser $ mconcat
     p cmd commandActions desc =
          O.command cmd $ O.info (O.helper <*> pure commandActions) $ O.progDesc desc
 
+parseEnv :: Opts -> IO Opts
+parseEnv opts = case opts ^. optsStackFile of
+    Just _ -> pure opts
+    Nothing -> do
+        sf <- lookupEnv "STACK_YAML"
+        pure $ opts & optsStackFile .~ sf
+
 main :: IO ()
 main =
-    O.execParser opts >>= execCmd
+    O.execParser opts >>= parseEnv >>= execCmd
   where
     opts = O.info (O.helper <*> optsParser) $ mconcat
         [ O.fullDesc
