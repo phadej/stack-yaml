@@ -19,7 +19,8 @@ extra-source-files:
 ghc-options: -Wall
 
 dependencies:
-- base >=4.8 && <4.9
+- base >=4.7 && <4.9
+- base-compat
 - bytestring
 - Cabal
 - exceptions
@@ -35,7 +36,7 @@ dependencies:
 - regex-applicative-text
 - text
 - vector
-- yaml
+- yaml >=0.8.14
 
 executables:
   stack-yaml:

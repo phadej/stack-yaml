@@ -4,6 +4,9 @@ module StackYaml.Transformations.UpdateGithubDeps
   ( transformation
   ) where
 
+import Prelude        ()
+import Prelude.Compat
+
 import Control.Applicative         (many, (<|>))
 import Control.Lens
 import Control.Monad.Catch         (throwM)

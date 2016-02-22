@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.8.0.
+-- This file has been generated from package.yaml by hpack version 0.9.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -34,7 +34,8 @@ executable stack-yaml
       src
   ghc-options: -Wall
   build-depends:
-      base >=4.8 && <4.9
+      base >=4.7 && <4.9
+    , base-compat
     , bytestring
     , Cabal
     , exceptions
@@ -50,7 +51,7 @@ executable stack-yaml
     , regex-applicative-text
     , text
     , vector
-    , yaml
+    , yaml >=0.8.14
   other-modules:
       StackYaml.Normalize
       StackYaml.Transformations.UpdateExtraDeps

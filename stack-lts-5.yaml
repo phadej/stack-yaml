@@ -1,0 +1,7 @@
+resolver: lts-5.1
+packages:
+- '.'
+extra-deps:
+- packdeps-0.4.2.1
+flags: {}
+extra-package-dbs: []

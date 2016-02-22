@@ -1,0 +1,16 @@
+resolver: lts-2.22
+packages:
+- '.'
+extra-deps:
+- aeson-compat-0.3.1.0
+- binary-orphans-0.1.4.0
+- github-0.14.1
+- http-link-header-1.0.1
+- iso8601-time-0.1.4
+- packdeps-0.4.2.1
+- regex-applicative-text-0.1.0.1
+- yaml-0.8.16
+flags:
+  iso8601-time:
+    new-time: false
+extra-package-dbs: []
