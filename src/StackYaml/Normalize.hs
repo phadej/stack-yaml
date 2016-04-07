@@ -11,7 +11,7 @@ import qualified Data.Text as T
 
 normalize :: Value -> Value
 normalize v = v
-    & partsOf (key "packages" . values) %~ sortBy (comparing pkgName)
+    & partsOf (key "packages" . values) %~ nub . sortBy (comparing pkgName)
     & partsOf (key "extra-deps" . values . _String) %~ nub . sortBy (comparing T.toLower)
   where
     pkgName :: Value -> Either T.Text (Either T.Text ())

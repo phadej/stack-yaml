@@ -43,6 +43,7 @@ executables:
     main: Main.hs
     other-modules:
       - StackYaml.Normalize
+      - StackYaml.Transformations.CopyPackages
       - StackYaml.Transformations.UpdateExtraDeps
       - StackYaml.Transformations.UpdateGithubDeps
     source-dirs: src
