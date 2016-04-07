@@ -20,6 +20,7 @@ import qualified Options.Applicative as O
 
 import StackYaml.Normalize (normalize)
 
+import qualified StackYaml.Transformations.CopyPackages     as CopyPackages
 import qualified StackYaml.Transformations.UpdateExtraDeps  as UpdateExtraDeps
 import qualified StackYaml.Transformations.UpdateGithubDeps as UpdateGithubDeps
 
@@ -62,11 +63,28 @@ cmdParser = O.subparser $ mconcat
     , p "update-extra-deps"
         UpdateExtraDeps.transformation
         "Update extra-deps to the newest version in cabal database"
+    , p' "copy-packages"
+        CopyPackages.transformation
+        "Copy github packages from other stack.yaml file"
     ]
   where
-    p :: String -> (Value -> IO Value)-> String -> O.Mod O.CommandFields (Value -> IO Value)
+    p :: String -> (Value -> IO Value) -> String -> O.Mod O.CommandFields (Value -> IO Value)
     p cmd commandActions desc =
          O.command cmd $ O.info (O.helper <*> pure commandActions) $ O.progDesc desc
+
+    p' :: String -> (Value -> Value -> IO Value) -> String
+       -> O.Mod O.CommandFields (Value -> IO Value)
+    p' cmd action desc =
+        O.command cmd $ O.info (O.helper <*> parser) $ O.progDesc desc
+      where
+        parser = action' <$> O.strOption (O.short 'f' <> O.long "from" <> O.metavar "FROM" <> O.help "Source stack.yaml file")
+
+        action' :: FilePath -> Value -> IO Value
+        action' path value = do
+            fromValueE <- decodeFileEither path
+            case fromValueE of
+                Left err -> throwM err
+                Right fromValue -> action fromValue value
 
 parseEnv :: Opts -> IO Opts
 parseEnv opts = case opts ^. optsStackFile of
