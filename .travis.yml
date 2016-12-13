@@ -19,34 +19,27 @@ install:
   cat installplan.txt; stack --no-terminal --skip-ghc-check setup; if diff -u $HOME/.stack-work-cache/installplan.txt
   installplan.txt; then echo "cabal build-cache HIT"; rm -rf .stack-work; cp -a $HOME/.stack-work-cache
   .stack-work; rm -f .stack-work/installplan.txt; else echo "cabal build-cache MISS";
-  rm -rf $HOME/.stack-work-cache; stack --no-terminal --skip-ghc-check build --test
-  --only-dependencies; fi; if [ ! -d $HOME/.stack-work-cache ]; then echo "snapshotting
-  package-db to build-cache"; cp -a .stack-work $HOME/.stack-work-cache; cp -a installplan.txt
-  $HOME/.stack-work-cache/installplan.txt; fi;
+  rm -rf $HOME/.stack-work-cache; stack --no-terminal --skip-ghc-check --system-ghc
+  build --test --only-dependencies -j1 --ghc-options="-j2 +RTS -M2G -A128M -n2m -RTS";
+  fi; if [ ! -d $HOME/.stack-work-cache ]; then echo "snapshotting package-db to build-cache";
+  cp -a .stack-work $HOME/.stack-work-cache; cp -a installplan.txt $HOME/.stack-work-cache/installplan.txt;
+  fi;
 script:
 - if [ "$PEDANTIC" = "YES" ]; then export STACKOPTS=--pedantic; fi
-- stack --no-terminal --skip-ghc-check build --test $STACKOPTS
+- stack --no-terminal --skip-ghc-check --system-ghc build --test $STACKOPTS -j1 --ghc-options="-j2
+  +RTS -M2G -A128M -n2m -RTS"
 - stack --no-terminal --skip-ghc-check sdist
 matrix:
   include:
-  - env: GHCVER=7.8.4 STACK_YAML=stack-lts-2.yaml PEDANTIC=YES
+  - env: GHCVER=8.0.1 STACK_YAML=stack.yaml PEDANTIC=YES
     addons:
       apt:
         sources:
         - hvr-ghc
         packages:
-        - ghc-7.8.4
+        - ghc-8.0.1
         - libgmp-dev
-    compiler: ! ': # ghc-7.8.4 stack-lts-2.yaml'
-  - env: GHCVER=7.10.3 STACK_YAML=stack-lts-5.yaml PEDANTIC=YES
-    addons:
-      apt:
-        sources:
-        - hvr-ghc
-        packages:
-        - ghc-7.10.3
-        - libgmp-dev
-    compiler: ! ': # ghc-7.10.3 stack-lts-5.yaml'
+    compiler: ! ': # ghc-8.0.1 stack.yaml'
 branches:
   only:
   - master

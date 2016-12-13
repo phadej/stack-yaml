@@ -31,7 +31,7 @@ transformation value = do
     updateGithubDep :: Manager -> Object -> IO Object
     updateGithubDep mgr obj = fmap (fromMaybe obj) . runMaybeT $ do
         (owner, repo) <- liftMaybe $ (obj ^? ix "git" . _String) >>= parseGithub
-        branches      <- liftIO    $ executeRequest mgr $ GH.branchesForR owner repo $ Just 1
+        branches      <- liftIO    $ executeRequest mgr $ GH.branchesForR owner repo $ GH.FetchAtLeast 1
         branch        <- liftMaybe $ V.find ((== "master") . GH.branchName) branches
         let obj'      =  obj & ix "commit" . _String .~ GH.branchCommitSha (GH.branchCommit branch)
         pure obj'
@@ -39,7 +39,7 @@ transformation value = do
 liftMaybe :: Applicative m => Maybe a -> MaybeT m a
 liftMaybe = MaybeT . pure
 
-executeRequest :: Manager -> GH.Request 'False a -> IO a
+executeRequest :: Manager -> GH.Request 'GH.RO a -> IO a
 executeRequest mgr req = either throwM pure =<< GH.executeRequestWithMgr' mgr req
 
 parseGithub :: Text -> Maybe (GH.Name GH.Owner, GH.Name GH.Repo)
